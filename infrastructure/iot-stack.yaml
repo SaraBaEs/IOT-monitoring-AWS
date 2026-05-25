@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Infraestructura IoT para monitoreo de sensores industriales - Free Tier'
+
+Resources:
+  # DynamoDB Table para almacenar datos de sensores
+  SensorDataTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: SensorData
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: sensor_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sensor_id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: Project
+          Value: IoT-Monitoring
+
+  # IAM Role para Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: IoTLambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource: !GetAtt SensorDataTable.Arn
+
+  # Lambda Function para procesar datos
+  ProcessSensorDataFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ProcessSensorData
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref SensorDataTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from decimal import Decimal
+          
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['TABLE_NAME'])
+          
+          def lambda_handler(event, context):
+              try:
+                  sensor_data = event
+                  item = {
+                      'sensor_id': sensor_data['sensor_id'],
+                      'timestamp': sensor_data['timestamp'],
+                      'temperature': Decimal(str(sensor_data['temperature'])),
+                      'vibration': Decimal(str(sensor_data['vibration'])),
+                      'pressure': Decimal(str(sensor_data['pressure']))
+                  }
+                  table.put_item(Item=item)
+                  return {'statusCode': 200, 'body': 'Success'}
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  return {'statusCode': 500, 'body': str(e)}
+
+  # IoT Thing
+  IoTThing:
+    Type: AWS::IoT::Thing
+    Properties:
+      ThingName: IndustrialSensor001
+
+  # IoT Policy
+  IoTPolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyName: SensorPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - iot:Connect
+              - iot:Publish
+              - iot:Subscribe
+              - iot:Receive
+            Resource: '*'
+
+  # IoT Topic Rule
+  SensorDataRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: ProcessSensorDataRule
+      TopicRulePayload:
+        Sql: "SELECT * FROM 'sensors/data'"
+        Actions:
+          - Lambda:
+              FunctionArn: !GetAtt ProcessSensorDataFunction.Arn
+        RuleDisabled: false
+
+  # Permission para IoT invocar Lambda
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProcessSensorDataFunction
+      Action: lambda:InvokeFunction
+      Principal: iot.amazonaws.com
+      SourceArn: !GetAtt SensorDataRule.Arn
+
+Outputs:
+  DynamoDBTableName:
+    Description: Nombre de la tabla DynamoDB
+    Value: !Ref SensorDataTable
+  
+  LambdaFunctionArn:
+    Description: ARN de la función Lambda
+    Value: !GetAtt ProcessSensorDataFunction.Arn
+  
+  IoTThingName:
+    Description: Nombre del IoT Thing
+    Value: !Ref IoTThing
+  
+  IoTEndpoint:
+    Description: Endpoint de AWS IoT
+    Value: !Sub 'https://${AWS::AccountId}.iot.${AWS::Region}.amazonaws.com'
