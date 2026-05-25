@@ -34,7 +34,7 @@ AWS IoT Core → Lambda → DynamoDB
 ## 🛠️ Tecnologías y Herramientas
 
 ### Automatización Industrial
-- **PLC Siemens S7-1500**: Controlador lógico programable (simulado en esta versión)
+- **PLC Siemens S7-1500**: Controlador lógico programable
 - **Protocolos Industriales**: MQTT, OPC UA (preparado para integración)
 - **Sensores**: Temperatura, vibración, presión
 
@@ -47,24 +47,19 @@ AWS IoT Core → Lambda → DynamoDB
 - **CloudFormation**: Infraestructura como código (IaC)
 
 ### Desarrollo
-- **Python 3.11+**: Simulación de sensores y lógica de negocio
+- **Python 3.11+**: Métodos de obtención de datos físicos y lógica de negocio
 - **Git**: Control de versiones
 
-## 📋 Servicios AWS (Free Tier)
+## 📋 Servicios AWS Utilizados
 
-- AWS IoT Core: 500,000 mensajes/mes
-- Lambda: 1M solicitudes/mes
-- DynamoDB: 25 GB almacenamiento
-- S3: 5 GB (primeros 12 meses)
-- CloudWatch: 10 métricas personalizadas
+- **AWS IoT Core**: Gestión de dispositivos y mensajería MQTT
+- **AWS Lambda**: Procesamiento de eventos
+- **Amazon DynamoDB**: Almacenamiento de datos de sensores
+- **Amazon S3**: Repositorio de datos históricos
+- **AWS CloudWatch**: Monitoreo y logs del sistema
+- **AWS CloudFormation**: Despliegue de infraestructura
 
 ## 🚀 Instalación
-
-### Prerrequisitos
-
-- Python 3.8+
-- AWS CLI configurado
-- Cuenta AWS (Free Tier)
 
 ### Configuración
 
@@ -102,8 +97,8 @@ IOT-monitoring-AWS/
 ├── QUICKSTART.md
 ├── GITHUB_SETUP.md
 ├── infrastructure/          # Plantillas CloudFormation
-├── sensor-simulator/        # Simulador de sensores IoT
-├── lambda-functions/        # Funciones Lambda
+├── data-acquisition/        # Scripts de adquisición de datos de sensores
+├── lambda-functions/        # Funciones Lambda para procesamiento
 ├── docs/                    # Documentación técnica
 ├── certificates/            # Certificados IoT (no versionados)
 └── dashboard/              # Frontend (futuro)
@@ -156,7 +151,7 @@ IOT-monitoring-AWS/
 Especializada en la integración de sistemas de automatización industrial con tecnologías cloud, combinando experiencia en control con PLC y desarrollo de soluciones IoT escalables.
 
 - 📧 Email: sarakatherinebarbosa3@gmail.com
-- 💼 LinkedIn: [Sara Barbosa Escobar](https://linkedin.com/in/tu-perfil)
+- 💼 LinkedIn: [Sara Barbosa Escobar](https://www.linkedin.com/in/sara-barbosa-b562aa3b1)
 - 🌐 GitHub: [SaraBaEs](https://github.com/SaraBaEs)
 
 ## 🎓 Competencias Demostradas
